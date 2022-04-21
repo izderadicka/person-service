@@ -1,0 +1,13 @@
+bases:
+  - ../../base
+
+namePrefix: dev-
+commonLabels:
+  env: development
+
+commonAnnotations:
+  enableFor: developers
+
+patchesStrategicMerge:
+  - deployment.yaml
+  - route.yaml

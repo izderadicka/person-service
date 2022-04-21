@@ -1,0 +1,29 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: person-service
+spec:
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        deployment: person-service
+    spec:
+      containers:
+        - image: image-registry.openshift-image-registry.svc:5000/book-dev/person-service:latest
+          imagePullPolicy: Always
+          name: person-service
+          ports:
+            - containerPort: 8080
+              protocol: TCP
+            - containerPort: 8443
+              protocol: TCP
+            - containerPort: 8778
+              protocol: TCP
+          resources: {}
+          env:
+            - name: DB_HOST
+              value: postgresql.quarkus.svc.cluster.local
+            - name: APP_GREETING
+              value: Hey this is a DEVELOPMENT env
+      restartPolicy: Always

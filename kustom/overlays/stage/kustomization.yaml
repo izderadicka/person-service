@@ -1,0 +1,13 @@
+bases:
+  - ../../base
+
+namePrefix: stage-
+commonLabels:
+  env: stage
+
+commonAnnotations:
+  enableFor: testers
+
+patchesStrategicMerge:
+  - deployment.yaml
+  - route.yaml
