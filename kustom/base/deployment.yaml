@@ -36,4 +36,7 @@ spec:
           env:
             - name: DB_HOST
               value: postgresql.quarkus.svc.cluster.local
+          envFrom:
+            - configMapRef:
+                name: app-config
       restartPolicy: Always

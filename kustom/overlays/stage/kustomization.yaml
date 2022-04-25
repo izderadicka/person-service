@@ -11,3 +11,17 @@ commonAnnotations:
 patchesStrategicMerge:
   - deployment.yaml
   - route.yaml
+
+# generate a configmap
+configMapGenerator:
+  - name: app-config
+    literals:
+    - APP_GREETING=We are in new STAGE emv
+
+patches:
+  - patch: |-
+      - op: add
+        path: /spec/template/metadata/annotations/app-version
+        value: v.0.0.1a
+    target:
+      kind: Deployment

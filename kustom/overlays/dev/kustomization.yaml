@@ -8,6 +8,27 @@ commonLabels:
 commonAnnotations:
   enableFor: developers
 
-patchesStrategicMerge:
-  - deployment.yaml
-  - route.yaml
+images:
+  - name: image-registry.openshift-image-registry.svc:5000/book-test/person-service
+    newName: quay.io/izderadicka/person-service
+    newTag: v1.0.0a
+
+configMapGenerator:
+- name: app-config
+  literals:
+    - APP_GREETING=We are in DEVELOPMENT mode
+
+patches:
+- patch: |-
+    - op: replace
+      path: /spec/to/name
+      value: dev-person-service
+  target:
+    kind: Route
+- patch: |-
+    - op: replace
+      path: /spec/template/spec/containers/0/imagePullPolicy
+      value: Always
+  target:
+    kind: Deployment
+

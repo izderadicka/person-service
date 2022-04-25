@@ -8,6 +8,8 @@ spec:
     metadata:
       labels:
         deployment: person-service
+      annotations: {}
+        
     spec:
       containers:
         - image: image-registry.openshift-image-registry.svc:5000/book-dev/person-service:latest
@@ -30,6 +32,5 @@ spec:
           env:
             - name: DB_HOST
               value: postgresql.quarkus.svc.cluster.local
-            - name: APP_GREETING
-              value: Hey this is a STAGE env
+         
       restartPolicy: Always
