@@ -3,11 +3,12 @@ kind: Deployment
 metadata:
   labels:
     app: person-service
-    app.kubernetes.io/component: person-service
-    app.kubernetes.io/instance: person-service
+    app.kubernetes.io/component: {{ .Chart.Name | quote }}
+    app.kubernetes.io/instance: {{ .Chart.Name | quote }}
+    app.kubernetes.io/version: {{ .Chart.AppVersion }}
   name: person-service
 spec:
-  replicas: 1
+  replicas: {{ .Values.deployment.replicas }}
   selector:
     matchLabels:
       deployment: person-service
@@ -20,9 +21,12 @@ spec:
     metadata:
       labels:
         deployment: person-service
+        app.kubernetes.io/component: {{ .Chart.Name | quote }}
+        app.kubernetes.io/instance: {{ .Chart.Name | quote }}
+        app.kubernetes.io/version: {{ .Chart.AppVersion }}
     spec:
       containers:
-        - image: quay.io/izderadicka/person-service:v1.0.0
+        - image: {{ .Values.deployment.image -}}:{{- .Values.deployment.tag}}
           imagePullPolicy: IfNotPresent
           name: person-service
           ports:
@@ -38,5 +42,26 @@ spec:
               value: postgresql.quarkus.svc.cluster.local
           envFrom:
             - configMapRef:
-                name: app-config
+                name: {{ .Release.Name }}-config
+          {{- if .Values.deployment.includeHealthChecks }}
+          readinessProbe:
+            httpGet:
+              path: /q/health/ready
+              port: 8080
+              scheme: HTTP
+            timeoutSeconds: 1
+            periodSeconds: 10
+            successThreshold: 1
+            failureThreshold: 3
+          livenessProbe:
+            httpGet:
+              path: /q/health/live
+              port: 8080
+              scheme: HTTP
+            timeoutSeconds: 2
+            periodSeconds: 10
+            successThreshold: 1
+            failureThreshold: 3
+        {{- end }}
       restartPolicy: Always
+      
