@@ -1,0 +1,7 @@
+deployment:
+  image: quay.io/izderadicka/person-service
+  tag: v1.0.0a
+  replicas: 2
+  includeHealthChecks: false
+config:
+  greeting: Helmovatejsi nez kdy drive

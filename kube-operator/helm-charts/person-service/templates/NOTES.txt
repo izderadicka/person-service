@@ -1,0 +1,7 @@
+# Release notes for demo person service
+
+- Chart name : {{ .Chart.Name }}
+- Chart description {{ .Chart.Description }}
+- Chart version {{ .Chart.Version }} for app {{ .Chart.AppVersion }}
+
+Lorem i psum

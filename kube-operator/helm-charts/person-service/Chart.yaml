@@ -1,0 +1,12 @@
+apiVersion: v2
+appVersion: 1.0.0
+description: A helm chart for the basic person-service used as example in the book
+home: https://github.com/izderadicka/person-service
+maintainers:
+- email: ivan.zderadicka@gmail.com
+  name: Ivan
+name: person-service
+sources:
+- https://github.com/izderadicka/person-service.git
+type: application
+version: 0.0.2

@@ -1,0 +1,16 @@
+domain: zderadicka.eu
+layout:
+- helm.sdk.operatorframework.io/v1
+plugins:
+  manifests.sdk.operatorframework.io/v2: {}
+  scorecard.sdk.operatorframework.io/v2: {}
+projectName: person-service-operator
+resources:
+- api:
+    crdVersion: v1
+    namespaced: true
+  domain: zderadicka.eu
+  group: charts
+  kind: PersonService
+  version: v1alpha1
+version: "3"

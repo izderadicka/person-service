@@ -1,0 +1,15 @@
+apiVersion: charts.zderadicka.eu/v1alpha1
+kind: PersonService
+metadata:
+  name: personservice-sample
+spec:
+  # Default values copied from <project_dir>/helm-charts/person-service/values.yaml
+  config:
+    greeting: Helmovatejsi nez kdy drive
+  deployment:
+    image: quay.io/izderadicka/person-service
+    includeHealthChecks: false
+    replicas: 2
+    tag: v1.0.0a
+  
+  

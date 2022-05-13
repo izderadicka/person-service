@@ -1,0 +1,20 @@
+# permissions for end users to view personservices.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: personservice-viewer-role
+rules:
+- apiGroups:
+  - charts.zderadicka.eu
+  resources:
+  - personservices
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - charts.zderadicka.eu
+  resources:
+  - personservices/status
+  verbs:
+  - get
