@@ -1,0 +1,20 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: book-dev
+  namespace: openshift-gitops
+spec:
+  destination:
+    namespace: book-dev
+    server: https://kubernetes.default.svc
+  project: default
+  source:
+    path: kustom/overlays/dev
+    repoURL: https://github.com/izderadicka/person-service.git
+    targetRevision: HEAD
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+    - CreateNamespace=true
