@@ -1,0 +1,166 @@
+apiVersion: tekton.dev/v1beta1
+kind: Pipeline
+metadata:
+  name: build-and-push-image
+spec:
+  params:
+    - default: 'https://github.com/izderadicka/person-service.git'
+      description: Source to the GIT
+      name: git-url
+      type: string
+    - default: master
+      description: revision to be used
+      name: git-revision
+      type: string
+    - name: context-dir
+      default: "the-source"
+      type: string
+      description: Where to checkout the source relative to the workspace
+    - name: image-name
+      type: string
+      description: the name of the target image including registry
+      default: quay.io/izderadicka/person-service
+    - name: image-username
+      type: string
+      description: the username you use to access the registry
+    - name: image-password
+      type: string
+      description: The password you use to access the registry
+    - name: target-namespace
+      description: The name of the namespace to apply the result to
+    - name: deploy-git-url
+      type: string
+      description: git url of deployment repo
+    - name: deploy-kustomize-dir
+      type: string
+      description: directory with kustomization.yaml of deployment 
+    - name: deploy-image-placeholder
+      type: string
+      description: Current image name -  to be replaced
+    - name: deploy-image
+      type: string
+      description: service image name - final in registry
+  tasks:
+    - name: git-clone
+      params:
+        - name: url
+          value: $(params.git-url)
+        - name: deleteExisting
+          value: 'true'
+        - name: verbose
+          value: 'true'
+        - name: revision
+          value: $(params.git-revision)
+        - name: subdirectory
+          value: $(params.context-dir)
+      taskRef:
+        kind: ClusterTask
+        name: git-clone
+      workspaces:
+        - name: output
+          workspace: shared-workspace
+    - name: package
+      params:
+        - name: GOALS
+          value:
+            - package
+            - '-DskipTests'
+            - '-Dquarkus.container-image.push=false'
+            - '-Dquarkus.container-image.build=false'
+        - name: CONTEXT_DIR
+          value: "$(params.context-dir)"
+      runAfter:
+        - git-clone
+      taskRef:        
+        kind: Task
+        name: maven-caching
+      workspaces:
+        - name: source
+          workspace: shared-workspace
+        - name: maven-settings
+          workspace: maven-settings
+    - name: build-and-push-image
+      params:
+        - name: GOALS
+          value:
+            - package
+            - '-DskipTests'
+            - '-Dquarkus.container-image.push=true'
+            - '-Dquarkus.container-image.build=true'
+            - '-Dquarkus.container-image.builder=jib'
+            - '-Dquarkus.container-image.image=$(params.image-name)'
+            - '-Dquarkus.container-image.username=$(params.image-username)'
+            - '-Dquarkus.container-image.password=$(params.image-password)'
+        - name: CONTEXT_DIR
+          value: "$(params.context-dir)"
+      runAfter:
+        - package
+      taskRef:
+        kind: Task
+        name: maven-caching
+      workspaces:
+        - name: source
+          workspace: shared-workspace
+        - name: maven-settings
+          workspace: maven-settings
+    - name: clone-deploy-repo
+      params:
+        - name: url
+          value: "$(params.deploy-git-url)"
+        - name: subdirectory
+          value: "the-config"
+        - name: deleteExisting
+          value: 'true'
+        - name: verbose
+          value: 'true'
+        - name: revision
+          value: "master"
+        # - name: revision
+        #   value: $(params.git-revision)
+      runAfter:
+        - git-clone
+      taskRef:
+        kind: ClusterTask
+        name: git-clone
+      workspaces:
+        - name: output
+          workspace: shared-workspace
+    - name: extract-digest
+      params:
+        - name: DIGEST_PATH
+          value: "$(params.context-dir)/target"
+      runAfter:
+        - build-and-push-image
+      taskRef:
+        kind: Task
+        name: extract-digest
+      workspaces:
+        - name: workspace
+          workspace: shared-workspace
+    - name: update-deploy-git
+      params:
+        - name: GIT_REPOSITORY
+          value: "$(params.deploy-git-url)"
+        - name: CURRENT_IMAGE
+          value: "$(params.deploy-image-placeholder)"
+        - name: NEW_IMAGE
+          value: "$(params.deploy-image)"
+        - name: NEW_DIGEST
+          value: $(tasks.extract-digest.results.DIGEST)
+        - name: KUSTOMIZE_PATH
+          value: "$(params.deploy-kustomize-dir)"
+      runAfter:
+        - extract-digest
+        - clone-deploy-repo
+      taskRef:
+        kind: Task
+        name: git-update
+      workspaces:
+        - name: workspace
+          workspace: shared-workspace
+    
+  workspaces:
+    - name: shared-workspace
+      optional: false
+    - name: maven-settings
+      optional: false

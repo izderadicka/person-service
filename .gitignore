@@ -40,3 +40,5 @@ nb-configuration.xml
 
 #
 *.tgz
+tekton/PipelineRun.yaml
+gitops/git-secret.yaml

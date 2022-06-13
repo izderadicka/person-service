@@ -1,0 +1,35 @@
+apiVersion: tekton.dev/v1beta1
+kind: PipelineRun
+metadata:
+  creationTimestamp: "2022-06-07T07:05:39Z"
+  labels:
+    tekton.dev/pipeline: build-and-push-image
+  name: build-and-push-image-rucne
+  namespace: book-tekton
+spec:
+  params:
+  - name: git-url
+    value: https://github.com/izderadicka/person-service.git
+  - name: git-revision
+    value: master
+  - name: context-dir
+    value: the-source
+  - name: image-name
+    value: quay.io/izderadicka/person-service
+  - name: image-username
+    value: izderadicka+token
+  - name: image-password
+    value: <TOKEN>
+  - name: target-namespace
+    value: book-tekton
+  pipelineRef:
+    name: build-and-push-image
+  serviceAccountName: pipeline
+  timeout: 1h0m0s
+  workspaces:
+  - name: shared-workspace
+    persistentVolumeClaim:
+      claimName: builder-pvc
+  - configMap:
+      name: maven-settings
+    name: maven-settings

@@ -1,0 +1,58 @@
+apiVersion: tekton.dev/v1beta1
+kind: Task
+metadata:
+  annotations:
+    tekton.dev/pipelines.minVersion: 0.12.1
+    tekton.dev/tags: git
+  name: git-update
+  labels:
+    app.kubernetes.io/version: '0.2'
+    operator.tekton.dev/provider-type: community
+spec:
+  description: Task to update image in k8s deployment repo
+  params:
+    - name: CURRENT_IMAGE
+      type: string
+    - name: GIT_REPOSITORY
+      type: string
+    - name: NEW_IMAGE
+      type: string
+    - name: NEW_DIGEST
+      type: string
+    - name: KUSTOMIZE_PATH
+      type: string
+  workspaces:
+    - name: workspace
+      description: Workspace for deployment repo clone
+  results:
+    - name: commit
+      description: Commit hash
+
+  steps:
+    - name: update-image-tag
+      image: quay.io/wpernath/kustomize-ubi:latest
+      workingDir: $(workspaces.workspace.path)/the-config
+      script: |
+        pwd
+        ls -la
+        cd $(params.KUSTOMIZE_PATH)
+        kustomize edit set image $(params.CURRENT_IMAGE)=$(params.NEW_IMAGE)@$(params.NEW_DIGEST)
+        cat kustomization.yaml
+    - name: git-commit
+      image: docker.io/alpine/git:v2.26.2
+      workingDir: $(workspaces.workspace.path)/the-config
+      script: |
+        set -ex
+        git show-ref
+        git status
+        git config user.email "ivan@zderadicka.eu"
+        git config user.name "Tekton Bot"
+        git add $(params.KUSTOMIZE_PATH)/kustomization.yaml
+        git commit -am "CI: Image digest update"
+        git status
+        git push origin HEAD:master
+        RESULT_SHA=$(git rev-parse HEAD | tr -d '\n')
+        echo -n "$RESULT_SHA" > $(results.commit.path)
+
+
+  

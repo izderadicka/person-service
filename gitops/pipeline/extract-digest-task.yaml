@@ -1,0 +1,22 @@
+apiVersion: tekton.dev/v1beta1
+kind: Task
+metadata:
+  name: extract-digest
+spec:
+  description: Task to extract digest from file
+  params:
+    - name: DIGEST_PATH
+      type: string
+  workspaces:
+    - name: workspace
+      description: workspace with build code
+  results:
+    - name: DIGEST
+      description: image digest
+  steps:
+    - name: extract-digest
+      image: quay.io/wpernath/kustomize-ubi:latest
+      script: |
+        cat $(workspaces.workspace.path)/$(params.DIGEST_PATH)/jib-image.digest > $(results.DIGEST.path)
+  
+ 
