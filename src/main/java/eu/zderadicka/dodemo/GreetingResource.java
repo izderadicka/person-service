@@ -16,6 +16,6 @@ public class GreetingResource {
     @GET
     @Produces(MediaType.TEXT_PLAIN)
     public String hello() {
-        return "I say: " + this.greeting;
+        return "Simon says: " + this.greeting;
     }
 }
