@@ -1,0 +1,28 @@
+apiVersion: tekton.dev/v1beta1
+kind: PipelineRun
+metadata:
+  labels:
+    tekton.dev/pipeline: deloy-in-stage
+  generateName: stage-pipeline-run-
+spec:
+  params:
+    - name: deploy-git-url
+      value :  https://github.com/izderadicka/person-service-config.git
+    - name: deploy-kustomize-dir
+      value: "overlays/dev"
+    - name: stage-kustomize-dir
+      value: "overlays/stage"
+    - name: deploy-image-placeholder
+      value: "image-registry.openshift-image-registry.svc:5000/book-test/person-service"
+    - name: deploy-image
+      value: quay.io/izderadicka/person-service
+    - name: release-name
+      value: v1.0.0
+  pipelineRef:
+    name: deploy-in-stage
+  serviceAccountName: pipeline
+  timeout: 1h0m0s
+  workspaces:
+    - name: shared-workspace
+      persistentVolumeClaim:
+        claimName: releaser-pvc

@@ -21,6 +21,9 @@ spec:
       type: string
     - name: KUSTOMIZE_PATH
       type: string
+    - name: RELEASE
+      type: string
+      default: ""
   workspaces:
     - name: workspace
       description: Workspace for deployment repo clone
@@ -36,7 +39,11 @@ spec:
         pwd
         ls -la
         cd $(params.KUSTOMIZE_PATH)
+        if [[ -z "$(params.RELEASE)" ]]; then
         kustomize edit set image $(params.CURRENT_IMAGE)=$(params.NEW_IMAGE)@$(params.NEW_DIGEST)
+        else
+        kustomize edit set image $(params.CURRENT_IMAGE)=$(params.NEW_IMAGE):$(params.RELEASE)
+        fi
         cat kustomization.yaml
     - name: git-commit
       image: docker.io/alpine/git:v2.26.2
@@ -48,9 +55,15 @@ spec:
         git config user.email "ivan@zderadicka.eu"
         git config user.name "Tekton Bot"
         git add $(params.KUSTOMIZE_PATH)/kustomization.yaml
-        git commit -am "CI: Image digest update"
+        git commit -am "CI: Image digest update $(params.RELEASE)"
         git status
+
+        if [[ -z "$(params.RELEASE)" ]]; then
         git push origin HEAD:master
+        else
+        git push --set-upstream origin $(params.RELEASE)
+        fi
+
         RESULT_SHA=$(git rev-parse HEAD | tr -d '\n')
         echo -n "$RESULT_SHA" > $(results.commit.path)
 

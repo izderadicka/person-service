@@ -1,0 +1,20 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: book-stage
+  namespace: openshift-gitops
+spec:
+  destination:
+    namespace: book-stage
+    server: https://kubernetes.default.svc
+  project: default
+  source:
+    path: overlays/stage
+    repoURL: https://github.com/izderadicka/person-service-config.git
+    targetRevision: HEAD
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+    - CreateNamespace=true

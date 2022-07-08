@@ -1,0 +1,114 @@
+apiVersion: tekton.dev/v1beta1
+kind: Pipeline
+metadata:
+  name: deploy-in-stage
+spec:
+  params:
+    - name: deploy-git-url
+      type: string
+      description: git url of deployment repo
+    - name: deploy-kustomize-dir
+      type: string
+      description: directory with kustomization.yaml of deployment 
+    - name: stage-kustomize-dir
+      type: string
+      description: directory with kustomization.yaml of deployment - for stage
+    - name: deploy-image-placeholder
+      type: string
+      description: Current image name -  to be replaced
+    - name: deploy-image
+      type: string
+      description: service image name - final in registry
+    - name: release-name
+      type: string
+      description: tag of new release
+   
+  tasks:
+    - name: clone-deploy-repo
+      params:
+        - name: url
+          value: "$(params.deploy-git-url)"
+        - name: subdirectory
+          value: "the-config"
+        - name: deleteExisting
+          value: 'true'
+        - name: verbose
+          value: 'true'
+        - name: revision
+          value: "master"
+        # - name: revision
+        #   value: $(params.git-revision)
+      taskRef:
+        kind: ClusterTask
+        name: git-clone
+      workspaces:
+        - name: output
+          workspace: shared-workspace
+    - name: git-branch
+      params:
+        - name: GIT_SCRIPT
+          value: cd the-config && git checkout -b $(params.release-name)
+      runAfter:
+        - clone-deploy-repo
+      taskRef:
+        kind: ClusterTask
+        name: git-cli
+      workspaces:
+        - name: source
+          workspace: shared-workspace
+    - name: extract-digest
+      taskRef:
+        kind: Task
+        name: extract-digest-from-deployment
+      runAfter:
+        - clone-deploy-repo
+      params:
+        - name: kustomize-dir
+          value: "$(params.deploy-kustomize-dir)"
+      workspaces:
+        - name: source
+          workspace: shared-workspace
+    - name: tag-image
+      taskRef:
+        kind: ClusterTask
+        name: skopeo-copy
+      runAfter:
+        - extract-digest
+        - git-branch
+      params:
+        - name: srcImageURL
+          value: docker://$(params.deploy-image)@$(tasks.extract-digest.results.DIGEST)
+        - name: destImageURL
+          value:  docker://$(params.deploy-image):$(params.release-name)
+      workspaces:
+        - name: images-url
+          workspace: shared-workspace
+    - name: create-release
+      taskRef:
+        kind: Task
+        name: git-update
+      runAfter:
+        - tag-image
+      workspaces:
+        - name: workspace
+          workspace: shared-workspace
+      params:
+        - name: CURRENT_IMAGE
+          value: $(params.deploy-image-placeholder)
+        - name: NEW_IMAGE
+          value: "$(params.deploy-image)"
+        - name: NEW_DIGEST
+          value: $(tasks.extract-digest.results.DIGEST)
+        - name: GIT_REPOSITORY
+          value: "$(params.deploy-git-url)"
+        - name: KUSTOMIZE_PATH
+          value: "$(params.stage-kustomize-dir)"
+        - name: RELEASE
+          value: "$(params.release-name)"
+  workspaces:
+    - name: shared-workspace
+      optional: false
+    
+
+
+  

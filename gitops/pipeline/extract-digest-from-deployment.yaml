@@ -1,0 +1,22 @@
+apiVersion: tekton.dev/v1beta1
+kind: Task
+metadata:
+  name: extract-digest-from-deployment
+spec:
+  params:
+    - name: kustomize-dir
+      type: string
+      description: directory to kustomization.yaml file
+  workspaces:
+    - name: source
+      description: workspace with cloned deployment repo
+  results:
+      - name: DIGEST
+        description: Extracted image digest
+  steps:
+    - name: extract-digect
+      image: quay.io/wpernath/kustomize-ubi:latest
+      script: |
+        DIGEST=$(yq '.images[0].digest'  $(workspaces.source.path)/the-config/$(params.kustomize-dir)/kustomization.yaml)
+        echo "DIGEST: $DIGEST"
+        echo -n $DIGEST > $(results.DIGEST.path)

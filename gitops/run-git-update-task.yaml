@@ -1,0 +1,31 @@
+apiVersion: tekton.dev/v1beta1
+kind: TaskRun
+metadata:
+  labels:
+    tekton.dev/pipeline: build-and-push-image
+    tekton.dev/pipelineTask: update-deploy-git
+    tekton.dev/task: git-update
+  generateName: test-task-update-deploy-git
+  
+spec:
+  params:
+  - name: GIT_REPOSITORY
+    value: https://github.com/izderadicka/person-service-config.git
+  - name: CURRENT_IMAGE
+    value: image-registry.openshift-image-registry.svc:5000/book-test/person-service
+  - name: NEW_IMAGE
+    value: quay.io/izderadicka/person-service
+  - name: NEW_DIGEST
+    value: sha256:8c6c1adf24d95d4d003985e7b5bf8e94c798917907accae92846b633cd529887
+  - name: KUSTOMIZE_PATH
+    value: overlays/dev
+  resources: {}
+  serviceAccountName: pipeline
+  taskRef:
+    kind: Task
+    name: git-update
+  timeout: 1h
+  workspaces:
+  - name: workspace
+    persistentVolumeClaim:
+      claimName: builder-pvc

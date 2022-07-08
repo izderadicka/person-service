@@ -4,7 +4,7 @@ metadata:
   creationTimestamp: "2022-06-07T07:05:39Z"
   labels:
     tekton.dev/pipeline: build-and-push-image
-  name: build-and-push-image-rucne
+  generateName: build-and-push-image-
 spec:
   params:
   - name: git-url
